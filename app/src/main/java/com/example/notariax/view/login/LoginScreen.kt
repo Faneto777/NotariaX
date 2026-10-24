@@ -105,7 +105,7 @@ fun LoginScreen(navController: NavController) {
             onClick = {
                 rutError = rut.isBlank()
                 if (!rutError && password.isNotBlank()) {
-                    navController.navigate(Rutas.HOME)
+                    navController.navigate(Rutas.TRAMITE)
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),

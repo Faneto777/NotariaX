@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.notariax.view.tramite.ProcessScreen
+
 object Rutas {
     const val LOGIN = "login"
     const val HOME = "home"
@@ -23,7 +25,8 @@ fun AppNavigation() {
         composable(Rutas.HOME) {
         }
 
-        composable(Rutas.TRAMITE) {
+        composable(route = Rutas.TRAMITE) {
+            ProcessScreen(navController = navController)
         }
 
         composable(Rutas.FIRMA) {
