@@ -35,6 +35,7 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rutError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -58,8 +59,14 @@ fun LoginScreen(navController: NavController) {
         Text(text = "RUT", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
         OutlinedTextField(
             value = rut,
-            onValueChange = { rut = it; rutError = false },
-            placeholder = { Text("Ingresa tu RUT") },
+            onValueChange = { input ->
+                val rutFiltrado = input.uppercase().filter { it.isDigit() || it == 'K' }
+                if (rutFiltrado.matches(Regex("^[0-9]*[K]?$")) && rutFiltrado.length <= 9) {
+                    rut = rutFiltrado
+                    rutError = false
+                }
+            },
+            placeholder = { Text("Ej: 12345678K") },
             isError = rutError,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -68,8 +75,7 @@ fun LoginScreen(navController: NavController) {
                 unfocusedBorderColor = ColorBorder
             ),
             supportingText = {
-                if (rutError) Text("El RUT es obligatorio", color = MaterialTheme.colorScheme.error)
-                else Text("Ej: 12.345.678-9", color = ColorSubtitle)
+                if (rutError) Text("Ingrese un RUT válido (mín. 8 caracteres)", color = MaterialTheme.colorScheme.error)
             }
         )
 
@@ -103,8 +109,10 @@ fun LoginScreen(navController: NavController) {
 
         Button(
             onClick = {
-                rutError = rut.isBlank()
-                if (!rutError && password.isNotBlank()) {
+                rutError = rut.isBlank() || rut.length < 8
+                passwordError = password.isBlank()
+
+                if (!rutError && !passwordError) {
                     navController.navigate(Rutas.TRAMITE)
                 }
             },
