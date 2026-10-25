@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
+import com.example.notariax.view.Rutas
 
 val ColorPrimary = Color(0xFF123D70)
 val ColorTextDark = Color(0xFF182D43)
@@ -175,7 +176,7 @@ fun SignDocScreen(navController: NavController) {
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = { navController.navigate("home") }) {
+                TextButton(onClick = { navController.navigate(Rutas.HOME) }) {
                     Text("Volver al Inicio", color = ColorPrimary, fontWeight = FontWeight.Bold)
                 }
             }

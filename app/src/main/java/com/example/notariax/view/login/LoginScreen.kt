@@ -84,9 +84,13 @@ fun LoginScreen(navController: NavController) {
         Text(text = "Contraseña", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                passwordError = false
+            },
             placeholder = { Text("Ingresa tu contraseña") },
             singleLine = true,
+            isError = passwordError,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -99,7 +103,10 @@ fun LoginScreen(navController: NavController) {
                 focusedBorderColor = ColorPrimary,
                 unfocusedBorderColor = ColorBorder
             ),
-            )
+            supportingText = {
+                if (passwordError) Text("La contraseña es obligatoria", color = MaterialTheme.colorScheme.error)
+            }
+        )
 
         TextButton(onClick = { }, modifier = Modifier.align(Alignment.End)) {
             Text("Olvidé mi contraseña", color = ColorPrimary, fontWeight = FontWeight.Bold)
@@ -113,7 +120,7 @@ fun LoginScreen(navController: NavController) {
                 passwordError = password.isBlank()
 
                 if (!rutError && !passwordError) {
-                    navController.navigate(Rutas.TRAMITE)
+                    navController.navigate(Rutas.HOME)
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),

@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 val ColorPrimary = Color(0xFF123D70)
 val ColorTextDark = Color(0xFF182D43)
@@ -40,7 +42,7 @@ fun ProcessScreen(navController: NavController) {
 
     LaunchedEffect(simularCargaAnimada) {
         if (simularCargaAnimada) {
-            delay(1500) // Simula tiempo de red
+            delay(1500)
             simularCargaAnimada = false
             tramiteEnviado = true
         }
@@ -50,7 +52,7 @@ fun ProcessScreen(navController: NavController) {
         AlertDialog(
             onDismissRequest = { mostrarModalConfirmacion = false },
             title = { Text("Confirmar envío") },
-            text = { Text("¿Estás seguro de enviar estos antecedentes y documentos ficticios al notario para su revisión?") },
+            text = { Text("¿Estás seguro de enviar estos antecedentes y documentos al notario para su revisión?") },
             confirmButton = {
                 TextButton(onClick = {
                     mostrarModalConfirmacion = false
@@ -129,7 +131,7 @@ fun ProcessScreen(navController: NavController) {
             Icon(imageVector = Icons.Default.AttachFile, contentDescription = "Adjuntar")
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (documentoAdjunto) "Documento_Ficticio.pdf adjuntado" else "Adjuntar documento base",
+                text = if (documentoAdjunto) "Documento.pdf adjuntado" else "Adjuntar documento base",
                 color = if (documentoAdjunto) Color(0xFF2E7D32) else ColorPrimary
             )
         }
@@ -166,5 +168,13 @@ fun ProcessScreen(navController: NavController) {
                 Text("Trámite enviado correctamente al notario.", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ProcessScreenPreview() {
+    MaterialTheme {
+        ProcessScreen(navController = rememberNavController())
     }
 }
