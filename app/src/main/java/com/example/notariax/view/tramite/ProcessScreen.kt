@@ -1,5 +1,7 @@
 package com.example.notariax.view.tramite
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,16 +12,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
+import com.example.notariax.view.Rutas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 
@@ -28,41 +33,38 @@ val ColorTextDark = Color(0xFF182D43)
 val ColorBorder = Color(0xFFCAD5E0)
 
 @Composable
-fun ProcessScreen(navController: NavController) {
-    var tipoTramite by remember { mutableStateOf("") }
-    var antecedentes by remember { mutableStateOf("") }
-    var documentoAdjunto by remember { mutableStateOf(false) }
+fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = viewModel()) {
+    val context = LocalContext.current
+    val tipoTramite by viewModel.tipoTramite.collectAsState()
+    val antecedentes by viewModel.antecedentes.collectAsState()
+    val documentoAdjunto by viewModel.documentoAdjunto.collectAsState()
+    
+    val tipoTramiteError by viewModel.tipoTramiteError.collectAsState()
+    val antecedentesError by viewModel.antecedentesError.collectAsState()
+    
+    val mostrarModalConfirmacion by viewModel.mostrarModalConfirmacion.collectAsState()
+    val simularCargaAnimada by viewModel.simularCargaAnimada.collectAsState()
+    val tramiteEnviado by viewModel.tramiteEnviado.collectAsState()
+    val fakeTramiteId by viewModel.fakeTramiteId.collectAsState()
 
-    var tipoTramiteError by remember { mutableStateOf(false) }
-    var antecedentesError by remember { mutableStateOf(false) }
-
-    var mostrarModalConfirmacion by remember { mutableStateOf(false) }
-    var simularCargaAnimada by remember { mutableStateOf(false) }
-    var tramiteEnviado by remember { mutableStateOf(false) }
-
-    LaunchedEffect(simularCargaAnimada) {
-        if (simularCargaAnimada) {
-            delay(1500)
-            simularCargaAnimada = false
-            tramiteEnviado = true
-        }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { exito ->
+        viewModel.onDocumentoCapturado(exito)
     }
 
     if (mostrarModalConfirmacion) {
         AlertDialog(
-            onDismissRequest = { mostrarModalConfirmacion = false },
+            onDismissRequest = { viewModel.onCancelarEnvio() },
             title = { Text("Confirmar envío") },
             text = { Text("¿Estás seguro de enviar estos antecedentes y documentos al notario para su revisión?") },
             confirmButton = {
-                TextButton(onClick = {
-                    mostrarModalConfirmacion = false
-                    simularCargaAnimada = true
-                }) {
+                TextButton(onClick = { viewModel.onConfirmarEnvio() }) {
                     Text("Enviar al Notario", color = ColorPrimary, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarModalConfirmacion = false }) {
+                TextButton(onClick = { viewModel.onCancelarEnvio() }) {
                     Text("Cancelar", color = ColorTextDark)
                 }
             }
@@ -96,7 +98,7 @@ fun ProcessScreen(navController: NavController) {
 
         OutlinedTextField(
             value = tipoTramite,
-            onValueChange = { tipoTramite = it; tipoTramiteError = false },
+            onValueChange = { viewModel.onTipoTramiteChanged(it) },
             label = { Text("Tipo de Trámite (Ej. Declaración Jurada)") },
             isError = tipoTramiteError,
             modifier = Modifier.fillMaxWidth(),
@@ -110,7 +112,7 @@ fun ProcessScreen(navController: NavController) {
 
         OutlinedTextField(
             value = antecedentes,
-            onValueChange = { antecedentes = it; antecedentesError = false },
+            onValueChange = { viewModel.onAntecedentesChanged(it) },
             label = { Text("Antecedentes o descripción") },
             isError = antecedentesError,
             minLines = 3,
@@ -124,14 +126,17 @@ fun ProcessScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedButton(
-            onClick = { documentoAdjunto = !documentoAdjunto },
+            onClick = {
+                val uri = viewModel.createImageFileUri(context)
+                cameraLauncher.launch(uri)
+            },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Icon(imageVector = Icons.Default.AttachFile, contentDescription = "Adjuntar")
+            Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = "Capturar con Cámara")
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (documentoAdjunto) "Documento.pdf adjuntado" else "Adjuntar documento base",
+                text = if (documentoAdjunto) "Foto documento adjuntada" else "Capturar documento base",
                 color = if (documentoAdjunto) Color(0xFF2E7D32) else ColorPrimary
             )
         }
@@ -139,14 +144,7 @@ fun ProcessScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = {
-                tipoTramiteError = tipoTramite.isBlank()
-                antecedentesError = antecedentes.isBlank()
-
-                if (!tipoTramiteError && !antecedentesError && !simularCargaAnimada) {
-                    mostrarModalConfirmacion = true
-                }
-            },
+            onClick = { viewModel.onPrepararEnvio() },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
             shape = RoundedCornerShape(8.dp),
@@ -162,10 +160,18 @@ fun ProcessScreen(navController: NavController) {
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Éxito", tint = Color(0xFF2E7D32))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Trámite enviado correctamente al notario.", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Éxito", tint = Color(0xFF2E7D32))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Trámite enviado correctamente al notario.", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("ID Trámite: $fakeTramiteId", color = ColorTextDark, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(onClick = { navController.navigate(Rutas.HOME) { popUpTo(Rutas.HOME) { inclusive = true } } }) {
+                    Text("Volver al Inicio", color = ColorPrimary, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
