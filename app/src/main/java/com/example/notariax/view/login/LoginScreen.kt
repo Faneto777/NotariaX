@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.notariax.view.Rutas
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,12 +31,23 @@ val ColorBorder = Color(0xFFCAD5E0)
 
 
 @Composable
-fun LoginScreen(navController: NavController) {
-    var rut by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {
+    val rut by viewModel.rut.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val rutError by viewModel.rutError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
+    val navigateToHome by viewModel.navigateToHome.collectAsState()
+    
     var passwordVisible by remember { mutableStateOf(false) }
-    var rutError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(navigateToHome) {
+        if (navigateToHome) {
+            navController.navigate(Rutas.HOME) {
+                popUpTo(Rutas.LOGIN) { inclusive = true }
+            }
+            viewModel.onNavigatedToHome()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -59,13 +71,7 @@ fun LoginScreen(navController: NavController) {
         Text(text = "RUT", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
         OutlinedTextField(
             value = rut,
-            onValueChange = { input ->
-                val rutFiltrado = input.uppercase().filter { it.isDigit() || it == 'K' }
-                if (rutFiltrado.matches(Regex("^[0-9]*[K]?$")) && rutFiltrado.length <= 9) {
-                    rut = rutFiltrado
-                    rutError = false
-                }
-            },
+            onValueChange = { viewModel.onRutChanged(it) },
             placeholder = { Text("Ej: 12345678K") },
             isError = rutError,
             singleLine = true,
@@ -84,10 +90,7 @@ fun LoginScreen(navController: NavController) {
         Text(text = "Contraseña", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
         OutlinedTextField(
             value = password,
-            onValueChange = {
-                password = it
-                passwordError = false
-            },
+            onValueChange = { viewModel.onPasswordChanged(it) },
             placeholder = { Text("Ingresa tu contraseña") },
             singleLine = true,
             isError = passwordError,
@@ -115,14 +118,7 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                rutError = rut.isBlank() || rut.length < 8
-                passwordError = password.isBlank()
-
-                if (!rutError && !passwordError) {
-                    navController.navigate(Rutas.HOME)
-                }
-            },
+            onClick = { viewModel.onLoginClick() },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
             shape = RoundedCornerShape(8.dp)
