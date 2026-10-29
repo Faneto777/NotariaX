@@ -24,9 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.delay
 import com.example.notariax.view.Rutas
 
 val ColorPrimary = Color(0xFF123D70)
@@ -35,19 +35,11 @@ val ColorBorder = Color(0xFFCAD5E0)
 val ColorBackground = Color(0xFFFFFFFF)
 
 @Composable
-fun SignDocScreen(navController: NavController) {
-    var tokenPin by remember { mutableStateOf("") }
-    var tokenError by remember { mutableStateOf(false) }
-    var documentoFirmado by remember { mutableStateOf(false) }
-    var procesandoFirma by remember { mutableStateOf(false) }
-
-    LaunchedEffect(procesandoFirma) {
-        if (procesandoFirma) {
-            delay(1500)
-            procesandoFirma = false
-            documentoFirmado = true
-        }
-    }
+fun SignDocScreen(navController: NavController, viewModel: SignDocViewModel = viewModel()) {
+    val tokenPin by viewModel.tokenPin.collectAsState()
+    val tokenError by viewModel.tokenError.collectAsState()
+    val documentoFirmado by viewModel.documentoFirmado.collectAsState()
+    val procesandoFirma by viewModel.procesandoFirma.collectAsState()
 
     Column(
         modifier = Modifier
@@ -112,12 +104,7 @@ fun SignDocScreen(navController: NavController) {
         )
         OutlinedTextField(
             value = tokenPin,
-            onValueChange = {
-                if (it.length <= 6) {
-                    tokenPin = it
-                    tokenError = false
-                }
-            },
+            onValueChange = { viewModel.onTokenChanged(it) },
             placeholder = { Text("Ingresa tu PIN de 6 dígitos") },
             isError = tokenError,
             singleLine = true,
@@ -135,12 +122,7 @@ fun SignDocScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {
-                tokenError = tokenPin.isBlank() || tokenPin.length < 4
-                if (!tokenError && !documentoFirmado) {
-                    procesandoFirma = true
-                }
-            },
+            onClick = { viewModel.onSignClick() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -176,7 +158,7 @@ fun SignDocScreen(navController: NavController) {
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = { navController.navigate(Rutas.HOME) }) {
+                TextButton(onClick = { navController.navigate(Rutas.HOME) { popUpTo(Rutas.HOME) { inclusive = true } } }) {
                     Text("Volver al Inicio", color = ColorPrimary, fontWeight = FontWeight.Bold)
                 }
             }
