@@ -111,7 +111,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
             }
         )
 
-        TextButton(onClick = { }, modifier = Modifier.align(Alignment.End)) {
+        TextButton(onClick = { navController.navigate(Rutas.FORGOT_PASSWORD) }, modifier = Modifier.align(Alignment.End)) {
             Text("Olvidé mi contraseña", color = ColorPrimary, fontWeight = FontWeight.Bold)
         }
 
@@ -128,7 +128,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { }) {
+        TextButton(onClick = { navController.navigate(Rutas.REGISTER) }) {
             Text("Crear cuenta", color = ColorPrimary, fontWeight = FontWeight.Bold)
         }
 
