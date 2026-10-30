@@ -1,5 +1,7 @@
 package com.example.notariax.view.tramite
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -22,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.notariax.view.Rutas
@@ -51,6 +54,15 @@ fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = vi
         contract = ActivityResultContracts.TakePicture()
     ) { exito ->
         viewModel.onDocumentoCapturado(exito)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val uri = viewModel.createImageFileUri(context)
+            cameraLauncher.launch(uri)
+        }
     }
 
     if (mostrarModalConfirmacion) {
@@ -127,8 +139,17 @@ fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = vi
 
         OutlinedButton(
             onClick = {
-                val uri = viewModel.createImageFileUri(context)
-                cameraLauncher.launch(uri)
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (hasPermission) {
+                    val uri = viewModel.createImageFileUri(context)
+                    cameraLauncher.launch(uri)
+                } else {
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(8.dp)
