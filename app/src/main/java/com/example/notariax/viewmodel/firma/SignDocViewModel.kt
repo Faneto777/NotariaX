@@ -1,4 +1,4 @@
-package com.example.notariax.view.firma
+package com.example.notariax.viewmodel.firma
 
 import android.app.Application
 import android.app.NotificationChannel

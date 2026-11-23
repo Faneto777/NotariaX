@@ -1,4 +1,4 @@
-package com.example.notariax.view.login
+package com.example.notariax.viewmodel.login
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

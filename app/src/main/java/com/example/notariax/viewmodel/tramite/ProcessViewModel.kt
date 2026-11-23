@@ -1,4 +1,4 @@
-package com.example.notariax.view.tramite
+package com.example.notariax.viewmodel.tramite
 
 import android.content.Context
 import android.net.Uri

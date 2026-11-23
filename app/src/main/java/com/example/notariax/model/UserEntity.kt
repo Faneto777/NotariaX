@@ -1,4 +1,4 @@
-package com.example.notariax.data.local
+package com.example.notariax.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

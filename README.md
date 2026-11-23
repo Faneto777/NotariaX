@@ -21,6 +21,22 @@ El proyecto sigue el patrón de arquitectura **MVVM (Model-View-ViewModel)** rec
 - **Navegación:** Navigation Compose
 - **Recursos Nativos:** Cámara (CameraX / Intent Image Capture) y Notificaciones del sistema (`NotificationManager`)
 
+## 📁 Estructura del proyecto
+
+```text
+app/src/main/java/com/example/notariax/
+├── data/
+│   ├── local/        # Persistencia local con Room
+│   └── repository/   # Acceso a los datos
+├── model/            # Entidades del dominio y de Room
+├── ui/
+│   ├── navigation/  # Rutas y navegación entre pantallas
+│   └── theme/       # Colores y tema visual
+├── view/             # Pantallas Jetpack Compose
+├── viewmodel/        # Estado y acciones de cada pantalla
+└── MainActivity.kt   # Punto de entrada de la aplicación
+```
+
 ## 📋 Requisitos e Instalación
 
 1. Clonar el repositorio:

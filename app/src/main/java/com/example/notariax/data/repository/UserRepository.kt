@@ -1,7 +1,8 @@
 package com.example.notariax.data.repository
 
+
 import com.example.notariax.data.local.UserDao
-import com.example.notariax.data.local.UserEntity
+import com.example.notariax.model.UserEntity
 
 class UserRepository(private val userDao: UserDao) {
 

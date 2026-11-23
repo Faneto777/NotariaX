@@ -1,4 +1,4 @@
-package com.example.notariax.view.home
+package com.example.notariax.viewmodel.home
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

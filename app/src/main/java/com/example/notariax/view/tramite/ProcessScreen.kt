@@ -1,7 +1,7 @@
 package com.example.notariax.view.tramite
 
-import android.Manifest
 import android.content.pm.PackageManager
+import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -11,29 +11,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.notariax.view.Rutas
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-
-val ColorPrimary = Color(0xFF123D70)
-val ColorTextDark = Color(0xFF182D43)
-val ColorBorder = Color(0xFFCAD5E0)
+import androidx.navigation.NavController
+import com.example.notariax.ui.navigation.Rutas
+import com.example.notariax.ui.theme.ColorBorder
+import com.example.notariax.ui.theme.ColorPrimary
+import com.example.notariax.ui.theme.ColorTextDark
+import com.example.notariax.viewmodel.tramite.ProcessViewModel
 
 @Composable
 fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = viewModel()) {

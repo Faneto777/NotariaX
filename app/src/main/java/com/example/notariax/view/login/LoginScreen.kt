@@ -4,31 +4,30 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.notariax.view.Rutas
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-
-val ColorPrimary = Color(0xFF123D70)
-val ColorTextDark = Color(0xFF182D43)
-val ColorSubtitle = Color(0xFF7A828C)
-val ColorBorder = Color(0xFFCAD5E0)
-
+import androidx.navigation.NavController
+import com.example.notariax.ui.navigation.Rutas
+import com.example.notariax.ui.theme.ColorBorder
+import com.example.notariax.ui.theme.ColorPrimary
+import com.example.notariax.ui.theme.ColorSubtitle
+import com.example.notariax.ui.theme.ColorTextDark
+import com.example.notariax.viewmodel.login.LoginViewModel
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {

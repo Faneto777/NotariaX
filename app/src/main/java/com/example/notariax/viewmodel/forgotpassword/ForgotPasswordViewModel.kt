@@ -1,4 +1,4 @@
-package com.example.notariax.view.forgotpassword
+package com.example.notariax.viewmodel.forgotpassword
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
