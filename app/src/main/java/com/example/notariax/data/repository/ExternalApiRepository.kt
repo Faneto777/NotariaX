@@ -41,11 +41,11 @@ class ExternalApiRepository(private val service: ExternalApiService) {
         )
     }
 
-    suspend fun createDemoPost(): PostResponse = service.createPost(
+    suspend fun createDemoPost(comment: String): PostResponse = service.createPost(
         PostRequest(
             userId = 1,
-            title = "Consulta de ejemplo NotariaX",
-            body = "Publicación de prueba enviada desde la aplicación."
+            title = "Sugerencia para NotaXo",
+            body = comment
         )
     )
 }

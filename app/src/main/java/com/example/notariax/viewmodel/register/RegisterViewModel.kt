@@ -151,9 +151,8 @@ class RegisterViewModel(
                 _registrationSuccess.value = true
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
-                _errorMessage.value = exception.localizedMessage
-                    ?: "No se pudo conectar con el backend."
+            } catch (_: Exception) {
+                _errorMessage.value = "No se pudo crear la cuenta. Comprueba tu conexión e inténtalo nuevamente."
             } finally {
                 _isRegistering.value = false
             }

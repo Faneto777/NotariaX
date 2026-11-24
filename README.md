@@ -73,6 +73,14 @@ Las pruebas unitarias de `LoginViewModel` y `RegisterViewModel` usan JUnit, Mock
 .\gradlew.bat :app:testDebugUnitTest
 ```
 
+Para generar el reporte JaCoCo de esos dos ViewModels y verificar que cada paquete mantenga al menos 80% de cobertura de líneas, ejecuta:
+
+```powershell
+.\gradlew.bat :app:jacocoViewModelCoverageReport
+```
+
+El reporte HTML queda en `app/build/reports/jacoco/jacocoViewModelCoverageReport/html/index.html`. La tarea falla si Login o Registro baja del 80%.
+
 ## 🔌 Backend Spring Boot del equipo
 
 La aplicación se conecta al backend Spring Boot del equipo con Retrofit y Gson. La URL está configurada en `BackendRetrofitClient` como `http://10.0.2.2:8080/`; las rutas no llevan prefijo `/api`. `10.0.2.2` permite que el emulador Android acceda al PC que lo está ejecutando.

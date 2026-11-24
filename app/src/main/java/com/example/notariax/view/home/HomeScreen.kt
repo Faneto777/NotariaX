@@ -103,7 +103,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        ExternalApiSection(
+        HelpAndFeedbackSection(
             state = externalApiState,
             onRefreshClick = viewModel::onRefreshExternalApiClick,
             onCreatePostClick = viewModel::onCreateDemoPostClick
@@ -162,13 +162,16 @@ private fun BackendUserSection(
 }
 
 @Composable
-private fun ExternalApiSection(
+private fun HelpAndFeedbackSection(
     state: ExternalApiUiState,
     onRefreshClick: () -> Unit,
-    onCreatePostClick: () -> Unit
+    onCreatePostClick: (String) -> Unit
 ) {
-    var showEndpointDetails by remember { mutableStateOf(false) }
-    val overview = state.overview
+    var comment by remember { mutableStateOf("") }
+
+    LaunchedEffect(state.postCreatedMessage) {
+        if (state.postCreatedMessage != null) comment = ""
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -180,15 +183,21 @@ private fun ExternalApiSection(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Datos externos",
+                text = "Centro de ayuda",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = ColorTextDark
             )
             Text(
-                text = "Contenido de demostración desde JSONPlaceholder.",
+                text = "Prepara tus antecedentes y documentos antes de iniciar un trámite.",
                 style = MaterialTheme.typography.bodySmall,
                 color = ColorTextDark.copy(alpha = 0.75f)
+            )
+
+            Text(
+                text = "Consulta información de apoyo y comparte sugerencias sobre la aplicación.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = ColorTextDark
             )
 
             if (state.isLoading) {
@@ -197,96 +206,64 @@ private fun ExternalApiSection(
 
             Text(
                 text = when {
-                    overview != null -> "Publicación de ejemplo #${overview.featuredPost.id} cargada"
-                    state.isLoading -> "Consultando contenido…"
-                    state.errorMessage != null -> "No se pudo cargar el contenido."
-                    else -> "Actualiza para consultar contenido de ejemplo."
+                    state.isLoading -> "Actualizando información…"
+                    state.overview != null -> "La información de apoyo está disponible."
+                    state.errorMessage != null -> "No fue posible actualizar la información."
+                    else -> "Actualiza para consultar la información disponible."
                 },
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = ColorTextDark
+                style = MaterialTheme.typography.bodySmall,
+                color = ColorTextDark.copy(alpha = 0.75f)
             )
 
             state.errorMessage?.let { message ->
                 Text(
-                    text = "Error de conexión: $message",
+                    text = message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2
                 )
             }
 
-            Row(
+            OutlinedButton(
+                onClick = onRefreshClick,
+                enabled = !state.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Actualizar información")
+            }
+
+            HorizontalDivider()
+
+            Text(
+                text = "¿Tienes una sugerencia?",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = ColorTextDark
+            )
+            OutlinedTextField(
+                value = comment,
+                onValueChange = { comment = it },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                placeholder = { Text("Escribe tu comentario") },
+                minLines = 2,
+                maxLines = 3,
+                enabled = !state.isLoading
+            )
+            Button(
+                onClick = { onCreatePostClick(comment.trim()) },
+                enabled = !state.isLoading && comment.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary)
             ) {
-                OutlinedButton(
-                    onClick = onRefreshClick,
-                    enabled = !state.isLoading,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Actualizar GET")
-                }
-                Button(
-                    onClick = {
-                        showEndpointDetails = true
-                        onCreatePostClick()
-                    },
-                    enabled = !state.isLoading,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary)
-                ) {
-                    Text("Probar POST")
-                }
+                Text(if (state.isLoading) "Enviando…" else "Enviar sugerencia")
             }
 
-            TextButton(
-                onClick = { showEndpointDetails = !showEndpointDetails },
-                modifier = Modifier.align(Alignment.Start)
-            ) {
-                Text(if (showEndpointDetails) "Ocultar detalles" else "Ver endpoints y respuestas")
-            }
-
-            if (showEndpointDetails) {
-                HorizontalDivider()
+            state.postCreatedMessage?.let { message ->
                 Text(
-                    text = "Consultas GET",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                overview?.let { resultOverview ->
-                    Text(
-                        text = resultOverview.featuredPost.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2
-                    )
-                    Text(
-                        text = resultOverview.featuredPost.body,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2
-                    )
-                    resultOverview.endpointResults.forEach { result ->
-                        Text(
-                            text = "${result.route} · ${result.resultSummary}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-
-                Text(
-                    text = "POST /posts · respuesta de prueba; no se guarda permanentemente.",
+                    text = message,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall
                 )
-
-                state.postCreatedMessage?.let { message ->
-                    Text(
-                        text = message,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
             }
         }
     }

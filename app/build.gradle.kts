@@ -1,4 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
 import java.util.Properties
 
 val releaseSigningPropertiesFile = rootProject.file("keystore.properties")
@@ -13,6 +17,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    id("jacoco")
+}
+
+jacoco {
+    toolVersion = "0.8.13"
 }
 
 android {
@@ -65,6 +74,81 @@ tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
+}
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+tasks.register<JacocoReport>("jacocoViewModelCoverageReport") {
+    group = "verification"
+    description = "Generates coverage for LoginViewModel and RegisterViewModel."
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    classDirectories.setFrom(
+        fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            include("com/example/notariax/viewmodel/login/LoginViewModel*.class")
+            include("com/example/notariax/viewmodel/register/RegisterViewModel*.class")
+        }
+    )
+    sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory) {
+            include("jacoco/testDebugUnitTest.exec")
+            include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        }
+    )
+}
+
+tasks.register<JacocoCoverageVerification>("jacocoViewModelCoverageVerification") {
+    group = "verification"
+    description = "Verifies 80% line coverage for the login and registration ViewModels."
+    dependsOn("testDebugUnitTest")
+
+    classDirectories.setFrom(
+        fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            include("com/example/notariax/viewmodel/login/LoginViewModel*.class")
+            include("com/example/notariax/viewmodel/register/RegisterViewModel*.class")
+        }
+    )
+    executionData.setFrom(
+        fileTree(layout.buildDirectory) {
+            include("jacoco/testDebugUnitTest.exec")
+            include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        }
+    )
+    violationRules {
+        rule {
+            element = "PACKAGE"
+            includes = listOf("com.example.notariax.viewmodel.login")
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.8".toBigDecimal()
+            }
+        }
+        rule {
+            element = "PACKAGE"
+            includes = listOf("com.example.notariax.viewmodel.register")
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.8".toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.named<JacocoReport>("jacocoViewModelCoverageReport") {
+    dependsOn("jacocoViewModelCoverageVerification")
 }
 
 dependencies {

@@ -104,32 +104,34 @@ class HomeViewModel(
                 }
             } catch (exception: kotlinx.coroutines.CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
+            } catch (_: Exception) {
                 _backendUserState.value = BackendUserUiState(
-                    errorMessage = exception.localizedMessage ?: "No se pudo conectar con el backend."
+                    errorMessage = "No se pudo cargar el perfil. Comprueba que el servicio esté disponible."
                 )
             }
         }
     }
 
-    fun onCreateDemoPostClick() {
+    fun onCreateDemoPostClick(comment: String) {
+        if (comment.isBlank() || _externalApiState.value.isLoading) return
+
         viewModelScope.launch {
             _externalApiState.value = _externalApiState.value.copy(
                 isLoading = true,
                 postCreatedMessage = null,
                 errorMessage = null
             )
-            runCatching { externalApiRepository.createDemoPost() }
-                .onSuccess { response ->
+            runCatching { externalApiRepository.createDemoPost(comment) }
+                .onSuccess {
                     _externalApiState.value = _externalApiState.value.copy(
                         isLoading = false,
-                        postCreatedMessage = "POST /posts respondió con ID ${response.id}. Es una respuesta de prueba; no se guarda permanentemente."
+                        postCreatedMessage = "Gracias por compartir tu sugerencia. La respuesta fue recibida en modo de demostración."
                     )
                 }
-                .onFailure { error ->
+                .onFailure {
                     _externalApiState.value = _externalApiState.value.copy(
                         isLoading = false,
-                        errorMessage = error.localizedMessage ?: "No se pudo conectar con la API externa."
+                        errorMessage = "No se pudo enviar la sugerencia. Inténtalo nuevamente."
                     )
                 }
         }
@@ -146,9 +148,9 @@ class HomeViewModel(
                 .onSuccess { overview ->
                     _externalApiState.value = ExternalApiUiState(overview = overview)
                 }
-                .onFailure { error ->
+                .onFailure {
                     _externalApiState.value = ExternalApiUiState(
-                        errorMessage = error.localizedMessage ?: "No se pudo conectar con la API externa."
+                        errorMessage = "No se pudo actualizar la información. Inténtalo nuevamente."
                     )
                 }
         }

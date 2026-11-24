@@ -82,9 +82,8 @@ class SignDocViewModel(application: Application) : AndroidViewModel(application)
                 sendSuccessNotification()
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
-                _errorFirma.value = exception.localizedMessage
-                    ?: "No se pudo conectar con el backend."
+            } catch (_: Exception) {
+                _errorFirma.value = "No se pudo firmar el documento. Comprueba tu conexión e inténtalo nuevamente."
             } finally {
                 _procesandoFirma.value = false
             }

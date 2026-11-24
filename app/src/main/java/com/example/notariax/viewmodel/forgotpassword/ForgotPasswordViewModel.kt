@@ -57,9 +57,8 @@ class ForgotPasswordViewModel(private val backendRepository: BackendRepository) 
                 }
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
-                _errorMessage.value = exception.localizedMessage
-                    ?: "No se pudo conectar con el backend."
+            } catch (_: Exception) {
+                _errorMessage.value = "No se pudo enviar la solicitud. Comprueba tu conexión e inténtalo nuevamente."
             } finally {
                 _isSending.value = false
             }

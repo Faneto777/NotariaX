@@ -110,9 +110,8 @@ class LoginViewModel(
                 _navigateToHome.value = true
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
-                _errorMessage.value = exception.localizedMessage
-                    ?: "No se pudo conectar con el backend."
+            } catch (_: Exception) {
+                _errorMessage.value = "No se pudo iniciar sesión. Comprueba tu conexión e inténtalo nuevamente."
             } finally {
                 _isLoading.value = false
             }

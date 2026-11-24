@@ -8,6 +8,7 @@ import com.example.notariax.data.repository.BackendRepository
 import com.example.notariax.data.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -107,5 +108,77 @@ class RegisterViewModelTest {
 
         viewModel.onNavigatedToHome()
         assertFalse(viewModel.registrationSuccess.value)
+    }
+
+    @Test
+    fun duplicateRutShowsConflictMessage() = runTest {
+        val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+        val conflictResponse = mockk<Response<UsuarioResponse>>()
+        every { conflictResponse.isSuccessful } returns false
+        every { conflictResponse.code() } returns 409
+        coEvery { backendRepository.registrarUsuario(request) } returns conflictResponse
+        enterValidForm()
+
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
+
+        assertEquals("Ya existe una cuenta registrada con ese RUT.", viewModel.errorMessage.value)
+        assertFalse(viewModel.registrationSuccess.value)
+        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+    }
+
+    @Test
+    fun serverFailureShowsStatusCode() = runTest {
+        val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+        val serverErrorResponse = mockk<Response<UsuarioResponse>>()
+        every { serverErrorResponse.isSuccessful } returns false
+        every { serverErrorResponse.code() } returns 500
+        coEvery { backendRepository.registrarUsuario(request) } returns serverErrorResponse
+        enterValidForm()
+
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
+
+        assertEquals("No se pudo registrar la cuenta. Código: 500.", viewModel.errorMessage.value)
+    }
+
+    @Test
+    fun successfulResponseWithoutUserShowsError() = runTest {
+        val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+        val emptySuccessResponse = mockk<Response<UsuarioResponse>>()
+        every { emptySuccessResponse.isSuccessful } returns true
+        every { emptySuccessResponse.body() } returns null
+        coEvery { backendRepository.registrarUsuario(request) } returns emptySuccessResponse
+        enterValidForm()
+
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
+
+        assertEquals("El backend no devolvió los datos del usuario.", viewModel.errorMessage.value)
+        assertFalse(viewModel.registrationSuccess.value)
+    }
+
+    @Test
+    fun networkFailureShowsFriendlyError() = runTest {
+        val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+        coEvery { backendRepository.registrarUsuario(request) } throws IllegalStateException("offline")
+        enterValidForm()
+
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
+
+        assertEquals(
+            "No se pudo crear la cuenta. Comprueba tu conexión e inténtalo nuevamente.",
+            viewModel.errorMessage.value
+        )
+        assertFalse(viewModel.isRegistering.value)
+    }
+
+    private fun enterValidForm() {
+        viewModel.onRutChanged("12345678K")
+        viewModel.onFullNameChanged("Juan Perez")
+        viewModel.onEmailChanged("juan@example.com")
+        viewModel.onPasswordChanged("clave123")
+        viewModel.onConfirmPasswordChanged("clave123")
     }
 }

@@ -126,9 +126,8 @@ class ProcessViewModel(application: Application) : AndroidViewModel(application)
                 _tramiteEnviado.value = true
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (exception: Exception) {
-                _errorEnvio.value = exception.localizedMessage
-                    ?: "No se pudo conectar con el backend."
+            } catch (_: Exception) {
+                _errorEnvio.value = "No se pudo enviar el trámite. Comprueba tu conexión e inténtalo nuevamente."
             } finally {
                 _enviandoTramite.value = false
             }
