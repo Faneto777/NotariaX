@@ -4,16 +4,22 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notariax.data.local.AppDatabase
+import com.example.notariax.data.repository.RoomUserRepository
 import com.example.notariax.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
+class LoginViewModel(
+    application: Application,
+    private val repository: UserRepository
+) : AndroidViewModel(application) {
 
-    private val userDao = AppDatabase.getDatabase(application).userDao()
-    private val repository = UserRepository(userDao)
+    constructor(application: Application) : this(
+        application,
+        RoomUserRepository(AppDatabase.getDatabase(application).userDao())
+    )
 
     private val _rut = MutableStateFlow("")
     val rut: StateFlow<String> = _rut.asStateFlow()

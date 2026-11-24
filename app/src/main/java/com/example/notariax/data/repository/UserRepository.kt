@@ -1,25 +1,11 @@
 package com.example.notariax.data.repository
 
-
-import com.example.notariax.data.local.UserDao
 import com.example.notariax.model.UserEntity
 
-class UserRepository(private val userDao: UserDao) {
+interface UserRepository {
+    suspend fun saveUser(username: String, fullName: String)
 
-    suspend fun saveUser(username: String, fullName: String) {
-        val user = UserEntity(
-            username = username,
-            fullName = fullName,
-            isLoggedIn = true
-        )
-        userDao.saveUser(user)
-    }
+    suspend fun getLoggedUser(): UserEntity?
 
-    suspend fun getLoggedUser(): UserEntity? {
-        return userDao.getLoggedUser()
-    }
-
-    suspend fun clearUser() {
-        userDao.clearUser()
-    }
+    suspend fun clearUser()
 }
