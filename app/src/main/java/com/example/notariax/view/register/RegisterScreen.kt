@@ -38,6 +38,8 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
     val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
     val confirmPasswordError by viewModel.confirmPasswordError.collectAsState()
+    val isRegistering by viewModel.isRegistering.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     val registrationSuccess by viewModel.registrationSuccess.collectAsState()
 
@@ -152,15 +154,21 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
             }
         )
 
+        errorMessage?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = { viewModel.onRegisterClick() },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isRegistering
         ) {
-            Text("Registrarse", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(if (isRegistering) "Registrando..." else "Registrarse", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(16.dp))

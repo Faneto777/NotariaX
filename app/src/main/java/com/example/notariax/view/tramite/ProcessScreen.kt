@@ -46,9 +46,10 @@ fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = vi
     val antecedentesError by viewModel.antecedentesError.collectAsState()
     
     val mostrarModalConfirmacion by viewModel.mostrarModalConfirmacion.collectAsState()
-    val simularCargaAnimada by viewModel.simularCargaAnimada.collectAsState()
+    val enviandoTramite by viewModel.enviandoTramite.collectAsState()
     val tramiteEnviado by viewModel.tramiteEnviado.collectAsState()
-    val fakeTramiteId by viewModel.fakeTramiteId.collectAsState()
+    val tramiteId by viewModel.tramiteId.collectAsState()
+    val errorEnvio by viewModel.errorEnvio.collectAsState()
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -169,9 +170,14 @@ fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = vi
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
             shape = RoundedCornerShape(8.dp),
-            enabled = !tramiteEnviado
+            enabled = !tramiteEnviado && !enviandoTramite
         ) {
-            Text(if (simularCargaAnimada) "Enviando..." else "Enviar al Notario")
+            Text(if (enviandoTramite) "Enviando..." else "Enviar al Notario")
+        }
+
+        errorEnvio?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -188,7 +194,7 @@ fun ProcessScreen(navController: NavController, viewModel: ProcessViewModel = vi
                     Text("Trámite enviado correctamente al notario.", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("ID Trámite: $fakeTramiteId", color = ColorTextDark, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                Text("ID Trámite: $tramiteId", color = ColorTextDark, fontWeight = FontWeight.Medium, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 TextButton(onClick = { navController.navigate(Rutas.HOME) { popUpTo(Rutas.HOME) { inclusive = true } } }) {
                     Text("Volver al Inicio", color = ColorPrimary, fontWeight = FontWeight.Bold)

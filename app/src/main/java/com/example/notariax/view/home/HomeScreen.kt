@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.example.notariax.ui.navigation.Rutas
 import com.example.notariax.ui.theme.ColorPrimary
 import com.example.notariax.ui.theme.ColorTextDark
+import com.example.notariax.viewmodel.home.BackendUserUiState
 import com.example.notariax.viewmodel.home.ExternalApiUiState
 import com.example.notariax.viewmodel.home.HomeViewModel
 
@@ -29,6 +30,7 @@ import com.example.notariax.viewmodel.home.HomeViewModel
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
     val navigateToLogin by viewModel.navigateToLogin.collectAsState()
     val externalApiState by viewModel.externalApiState.collectAsState()
+    val backendUserState by viewModel.backendUserState.collectAsState()
 
     LaunchedEffect(navigateToLogin) {
         if (navigateToLogin) {
@@ -60,6 +62,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
             fontSize = 14.sp,
             color = ColorTextDark.copy(alpha = 0.7f),
             modifier = Modifier.align(Alignment.Start)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        BackendUserSection(
+            state = backendUserState,
+            onRefreshClick = viewModel::onRefreshBackendUserClick
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -113,6 +122,41 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
             Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
             Spacer(modifier = Modifier.width(8.dp))
             Text("Cerrar Sesión", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun BackendUserSection(
+    state: BackendUserUiState,
+    onRefreshClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Perfil de usuario", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            when {
+                state.isLoading -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                state.user != null -> {
+                    Text(state.user.nombreCompleto, style = MaterialTheme.typography.bodyLarge)
+                    Text("RUT: ${state.user.rut}", style = MaterialTheme.typography.bodySmall)
+                    Text("Correo: ${state.user.email}", style = MaterialTheme.typography.bodySmall)
+                }
+                else -> {
+                    state.errorMessage?.let { message ->
+                        Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    OutlinedButton(onClick = onRefreshClick) {
+                        Text("Volver a cargar perfil")
+                    }
+                }
+            }
         }
     }
 }

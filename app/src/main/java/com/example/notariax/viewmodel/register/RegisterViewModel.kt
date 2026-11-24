@@ -4,8 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notariax.data.local.AppDatabase
+import com.example.notariax.data.remote.BackendRetrofitClient
+import com.example.notariax.data.remote.dto.UsuarioRequest
+import com.example.notariax.data.repository.BackendRepository
 import com.example.notariax.data.repository.RoomUserRepository
 import com.example.notariax.data.repository.UserRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,12 +17,14 @@ import kotlinx.coroutines.launch
 
 class RegisterViewModel(
     application: Application,
-    private val repository: UserRepository
+    private val sessionRepository: UserRepository,
+    private val backendRepository: BackendRepository
 ) : AndroidViewModel(application) {
 
     constructor(application: Application) : this(
         application,
-        RoomUserRepository(AppDatabase.getDatabase(application).userDao())
+        RoomUserRepository(AppDatabase.getDatabase(application).userDao()),
+        BackendRepository(BackendRetrofitClient.service)
     )
 
     private val _rut = MutableStateFlow("")
@@ -51,6 +57,12 @@ class RegisterViewModel(
     private val _confirmPasswordError = MutableStateFlow(false)
     val confirmPasswordError: StateFlow<Boolean> = _confirmPasswordError.asStateFlow()
 
+    private val _isRegistering = MutableStateFlow(false)
+    val isRegistering: StateFlow<Boolean> = _isRegistering.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     private val _registrationSuccess = MutableStateFlow(false)
     val registrationSuccess: StateFlow<Boolean> = _registrationSuccess.asStateFlow()
 
@@ -59,39 +71,44 @@ class RegisterViewModel(
         if (filtered.matches(Regex("^[0-9]*[K]?$")) && filtered.length <= 9) {
             _rut.value = filtered
             _rutError.value = false
+            _errorMessage.value = null
         }
     }
 
     fun onFullNameChanged(input: String) {
         _fullName.value = input
         _fullNameError.value = false
+        _errorMessage.value = null
     }
 
     fun onEmailChanged(input: String) {
-        _email.value = input
+        _email.value = input.trim()
         _emailError.value = false
+        _errorMessage.value = null
     }
 
     fun onPasswordChanged(input: String) {
         _password.value = input
         _passwordError.value = false
+        _errorMessage.value = null
     }
 
     fun onConfirmPasswordChanged(input: String) {
         _confirmPassword.value = input
         _confirmPasswordError.value = false
+        _errorMessage.value = null
     }
 
     fun onRegisterClick() {
         val currentRut = _rut.value
-        val currentName = _fullName.value
+        val currentName = _fullName.value.trim()
         val currentEmail = _email.value
         val currentPassword = _password.value
         val currentConfirm = _confirmPassword.value
 
         val hasRutErr = currentRut.isBlank() || currentRut.length < 8
         val hasNameErr = currentName.isBlank()
-        val hasEmailErr = currentEmail.isBlank() || !currentEmail.contains("@")
+        val hasEmailErr = currentEmail.isBlank() || !currentEmail.contains('@')
         val hasPassErr = currentPassword.isBlank() || currentPassword.length < 6
         val hasConfirmErr = currentConfirm != currentPassword || currentConfirm.isBlank()
 
@@ -100,11 +117,45 @@ class RegisterViewModel(
         _emailError.value = hasEmailErr
         _passwordError.value = hasPassErr
         _confirmPasswordError.value = hasConfirmErr
+        _errorMessage.value = null
 
-        if (!hasRutErr && !hasNameErr && !hasEmailErr && !hasPassErr && !hasConfirmErr) {
-            viewModelScope.launch {
-                repository.saveUser(username = currentRut, fullName = currentName)
+        if (hasRutErr || hasNameErr || hasEmailErr || hasPassErr || hasConfirmErr || _isRegistering.value) return
+
+        _isRegistering.value = true
+        viewModelScope.launch {
+            try {
+                val response = backendRepository.registrarUsuario(
+                    UsuarioRequest(
+                        rut = currentRut,
+                        nombreCompleto = currentName,
+                        email = currentEmail,
+                        password = currentPassword
+                    )
+                )
+
+                if (!response.isSuccessful) {
+                    _errorMessage.value = when (response.code()) {
+                        409 -> "Ya existe una cuenta registrada con ese RUT."
+                        else -> "No se pudo registrar la cuenta. Código: ${response.code()}."
+                    }
+                    return@launch
+                }
+
+                val user = response.body()
+                if (user == null) {
+                    _errorMessage.value = "El backend no devolvió los datos del usuario."
+                    return@launch
+                }
+
+                sessionRepository.saveUser(username = user.rut, fullName = user.nombreCompleto)
                 _registrationSuccess.value = true
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _errorMessage.value = exception.localizedMessage
+                    ?: "No se pudo conectar con el backend."
+            } finally {
+                _isRegistering.value = false
             }
         }
     }

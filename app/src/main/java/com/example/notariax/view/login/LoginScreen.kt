@@ -31,10 +31,12 @@ import com.example.notariax.viewmodel.login.LoginViewModel
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {
-    val rut by viewModel.rut.collectAsState()
+    val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
-    val rutError by viewModel.rutError.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     val navigateToHome by viewModel.navigateToHome.collectAsState()
     
     var passwordVisible by remember { mutableStateOf(false) }
@@ -67,12 +69,12 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = "RUT", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
+        Text(text = "Correo electrónico", color = ColorTextDark, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
         OutlinedTextField(
-            value = rut,
-            onValueChange = { viewModel.onRutChanged(it) },
-            placeholder = { Text("Ej: 12345678K") },
-            isError = rutError,
+            value = email,
+            onValueChange = { viewModel.onEmailChanged(it) },
+            placeholder = { Text("ejemplo@correo.com") },
+            isError = emailError,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -80,7 +82,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 unfocusedBorderColor = ColorBorder
             ),
             supportingText = {
-                if (rutError) Text("Ingrese un RUT válido (mín. 8 caracteres)", color = MaterialTheme.colorScheme.error)
+                if (emailError) Text("Ingrese un correo válido", color = MaterialTheme.colorScheme.error)
             }
         )
 
@@ -110,6 +112,11 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
             }
         )
 
+        errorMessage?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+
         TextButton(onClick = { navController.navigate(Rutas.FORGOT_PASSWORD) }, modifier = Modifier.align(Alignment.End)) {
             Text("Olvidé mi contraseña", color = ColorPrimary, fontWeight = FontWeight.Bold)
         }
@@ -120,9 +127,10 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
             onClick = { viewModel.onLoginClick() },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isLoading
         ) {
-            Text("Iniciar Sesión", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(if (isLoading) "Iniciando sesión..." else "Iniciar Sesión", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(16.dp))

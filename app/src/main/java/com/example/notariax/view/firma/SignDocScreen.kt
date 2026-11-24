@@ -40,6 +40,7 @@ fun SignDocScreen(navController: NavController, viewModel: SignDocViewModel = vi
     val tokenError by viewModel.tokenError.collectAsState()
     val documentoFirmado by viewModel.documentoFirmado.collectAsState()
     val procesandoFirma by viewModel.procesandoFirma.collectAsState()
+    val errorFirma by viewModel.errorFirma.collectAsState()
 
     Column(
         modifier = Modifier
@@ -128,11 +129,16 @@ fun SignDocScreen(navController: NavController, viewModel: SignDocViewModel = vi
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorPrimary),
             shape = RoundedCornerShape(8.dp),
-            enabled = !documentoFirmado
+            enabled = !documentoFirmado && !procesandoFirma
         ) {
             Icon(imageVector = Icons.Default.Create, contentDescription = "Firmar", modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(if (procesandoFirma) "Validando credenciales..." else "Firmar Documento")
+        }
+
+        errorFirma?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(modifier = Modifier.height(24.dp))

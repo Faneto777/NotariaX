@@ -1,12 +1,17 @@
 package com.example.notariax.viewmodel.tramite
 
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import androidx.core.content.FileProvider
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.notariax.data.local.PendingTramiteStore
+import com.example.notariax.data.remote.BackendRetrofitClient
+import com.example.notariax.data.remote.dto.TramiteRequest
+import com.example.notariax.data.repository.BackendRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,9 +20,11 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 
-class ProcessViewModel : ViewModel() {
+class ProcessViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val backendRepository = BackendRepository(BackendRetrofitClient.service)
+    private val pendingTramiteStore = PendingTramiteStore(application)
 
     private val _tipoTramite = MutableStateFlow("")
     val tipoTramite: StateFlow<String> = _tipoTramite.asStateFlow()
@@ -37,18 +44,20 @@ class ProcessViewModel : ViewModel() {
     private val _mostrarModalConfirmacion = MutableStateFlow(false)
     val mostrarModalConfirmacion: StateFlow<Boolean> = _mostrarModalConfirmacion.asStateFlow()
 
-    private val _simularCargaAnimada = MutableStateFlow(false)
-    val simularCargaAnimada: StateFlow<Boolean> = _simularCargaAnimada.asStateFlow()
+    private val _enviandoTramite = MutableStateFlow(false)
+    val enviandoTramite: StateFlow<Boolean> = _enviandoTramite.asStateFlow()
 
     private val _tramiteEnviado = MutableStateFlow(false)
     val tramiteEnviado: StateFlow<Boolean> = _tramiteEnviado.asStateFlow()
 
+    private val _tramiteId = MutableStateFlow("")
+    val tramiteId: StateFlow<String> = _tramiteId.asStateFlow()
+
+    private val _errorEnvio = MutableStateFlow<String?>(null)
+    val errorEnvio: StateFlow<String?> = _errorEnvio.asStateFlow()
+
     private val _fotoUri = MutableStateFlow<Uri?>(null)
     val fotoUri: StateFlow<Uri?> = _fotoUri.asStateFlow()
-
-    // Manejo de datos ficticios
-    private val _fakeTramiteId = MutableStateFlow("")
-    val fakeTramiteId: StateFlow<String> = _fakeTramiteId.asStateFlow()
 
     fun onTipoTramiteChanged(newVal: String) {
         _tipoTramite.value = newVal
@@ -73,7 +82,8 @@ class ProcessViewModel : ViewModel() {
         _tipoTramiteError.value = hasTipoError
         _antecedentesError.value = hasAntecedentesError
 
-        if (!hasTipoError && !hasAntecedentesError && !_simularCargaAnimada.value) {
+        if (!hasTipoError && !hasAntecedentesError && !_enviandoTramite.value) {
+            _errorEnvio.value = null
             _mostrarModalConfirmacion.value = true
         }
     }
@@ -84,22 +94,51 @@ class ProcessViewModel : ViewModel() {
 
     fun onConfirmarEnvio() {
         _mostrarModalConfirmacion.value = false
-        _simularCargaAnimada.value = true
+        if (_enviandoTramite.value) return
+
+        _enviandoTramite.value = true
+        _errorEnvio.value = null
 
         viewModelScope.launch {
-            delay(1500)
+            try {
+                val response = backendRepository.crearTramite(
+                    TramiteRequest(
+                        tipoTramite = _tipoTramite.value.trim(),
+                        antecedentes = _antecedentes.value.trim(),
+                        documentoAdjunto = _documentoAdjunto.value,
+                        estado = "PENDIENTE"
+                    )
+                )
 
-            // Generar datos ficticios
-            _fakeTramiteId.value = "TRM-" + UUID.randomUUID().toString().substring(0, 6).uppercase()
-            _simularCargaAnimada.value = false
-            _tramiteEnviado.value = true
+                if (!response.isSuccessful) {
+                    _errorEnvio.value = "No se pudo crear el trámite. Código: ${response.code()}."
+                    return@launch
+                }
+
+                val createdId = response.body()?.id
+                if (createdId == null) {
+                    _errorEnvio.value = "El backend no devolvió el ID del trámite."
+                    return@launch
+                }
+
+                pendingTramiteStore.save(createdId)
+                _tramiteId.value = createdId.toString()
+                _tramiteEnviado.value = true
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _errorEnvio.value = exception.localizedMessage
+                    ?: "No se pudo conectar con el backend."
+            } finally {
+                _enviandoTramite.value = false
+            }
         }
     }
 
     fun createImageFileUri(context: Context): Uri {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "JPEG_${timeStamp}_"
-        val storageDir: File? = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         val file = File.createTempFile(imageFileName, ".jpg", storageDir)
 
         val uri = FileProvider.getUriForFile(

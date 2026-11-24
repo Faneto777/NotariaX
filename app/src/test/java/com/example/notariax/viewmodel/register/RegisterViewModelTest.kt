@@ -2,7 +2,11 @@ package com.example.notariax.viewmodel.register
 
 import android.app.Application
 import com.example.notariax.MainDispatcherRule
+import com.example.notariax.data.remote.dto.UsuarioRequest
+import com.example.notariax.data.remote.dto.UsuarioResponse
+import com.example.notariax.data.repository.BackendRepository
 import com.example.notariax.data.repository.UserRepository
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,6 +17,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegisterViewModelTest {
@@ -22,7 +27,8 @@ class RegisterViewModelTest {
 
     private val application = mockk<Application>(relaxed = true)
     private val repository = mockk<UserRepository>(relaxed = true)
-    private val viewModel = RegisterViewModel(application, repository)
+    private val backendRepository = mockk<BackendRepository>(relaxed = true)
+    private val viewModel = RegisterViewModel(application, repository, backendRepository)
 
     @Test
     fun rutInputIsFilteredAndClearsItsError() {
@@ -77,6 +83,11 @@ class RegisterViewModelTest {
 
     @Test
     fun validRegistrationSavesUserAndCanClearSuccessAfterNavigation() = runTest {
+        coEvery {
+            backendRepository.registrarUsuario(
+                UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+            )
+        } returns Response.success(201, UsuarioResponse("12345678K", "Juan Perez", "juan@example.com"))
         viewModel.onRutChanged("12345678K")
         viewModel.onFullNameChanged("Juan Perez")
         viewModel.onEmailChanged("juan@example.com")
@@ -86,6 +97,11 @@ class RegisterViewModelTest {
         viewModel.onRegisterClick()
         advanceUntilIdle()
 
+        coVerify(exactly = 1) {
+            backendRepository.registrarUsuario(
+                UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+            )
+        }
         coVerify(exactly = 1) { repository.saveUser("12345678K", "Juan Perez") }
         assertTrue(viewModel.registrationSuccess.value)
 

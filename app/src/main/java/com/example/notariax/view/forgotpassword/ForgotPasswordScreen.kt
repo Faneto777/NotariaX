@@ -32,6 +32,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: ForgotPassword
     val emailError by viewModel.emailError.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
     val emailSent by viewModel.emailSent.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     Column(
         modifier = Modifier
@@ -54,7 +55,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: ForgotPassword
         Text(text = "Recuperar Contraseña", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = ColorPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Ingresa el correo electrónico asociado a tu cuenta para enviarte un enlace de recuperación.",
+            text = "Ingresa el correo asociado a tu cuenta para registrar una solicitud de recuperación.",
             color = ColorSubtitle,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
@@ -76,6 +77,11 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: ForgotPassword
             }
         )
 
+        errorMessage?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -86,7 +92,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: ForgotPassword
             enabled = !isSending && !emailSent
         ) {
             Text(
-                if (isSending) "Enviando correo..." else if (emailSent) "Correo Enviado" else "Enviar Enlace",
+                if (isSending) "Enviando solicitud..." else if (emailSent) "Solicitud enviada" else "Enviar solicitud",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -111,7 +117,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: ForgotPassword
                     Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "¡Listo! Revisa tu bandeja de entrada en $email para restablecer tu contraseña.",
+                        text = "La solicitud para $email fue recibida. El backend actual todavía no envía correos.",
                         color = Color(0xFF1B5E20),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium

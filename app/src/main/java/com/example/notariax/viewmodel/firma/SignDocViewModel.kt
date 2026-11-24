@@ -8,13 +8,22 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.notariax.data.local.PendingTramiteStore
+import com.example.notariax.data.remote.BackendRetrofitClient
+import com.example.notariax.data.remote.dto.FirmaRequest
+import com.example.notariax.data.repository.BackendRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SignDocViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val backendRepository = BackendRepository(BackendRetrofitClient.service)
+    private val pendingTramiteStore = PendingTramiteStore(application)
+    private val context = application.applicationContext
+    private val channelId = "notariax_channel"
 
     private val _tokenPin = MutableStateFlow("")
     val tokenPin: StateFlow<String> = _tokenPin.asStateFlow()
@@ -28,8 +37,8 @@ class SignDocViewModel(application: Application) : AndroidViewModel(application)
     private val _procesandoFirma = MutableStateFlow(false)
     val procesandoFirma: StateFlow<Boolean> = _procesandoFirma.asStateFlow()
 
-    private val context = application.applicationContext
-    private val channelId = "notariax_channel"
+    private val _errorFirma = MutableStateFlow<String?>(null)
+    val errorFirma: StateFlow<String?> = _errorFirma.asStateFlow()
 
     init {
         createNotificationChannel()
@@ -39,51 +48,75 @@ class SignDocViewModel(application: Application) : AndroidViewModel(application)
         if (newVal.length <= 6) {
             _tokenPin.value = newVal
             _tokenError.value = false
+            _errorFirma.value = null
         }
     }
 
     fun onSignClick() {
         val hasError = _tokenPin.value.isBlank() || _tokenPin.value.length < 4
         _tokenError.value = hasError
+        _errorFirma.value = null
 
-        if (!hasError && !_documentoFirmado.value) {
-            _procesandoFirma.value = true
+        if (hasError || _documentoFirmado.value || _procesandoFirma.value) return
 
-            viewModelScope.launch {
-                delay(1500)
-                _procesandoFirma.value = false
+        val tramiteId = pendingTramiteStore.get()
+        if (tramiteId == null) {
+            _errorFirma.value = "Primero debes crear un trámite para poder firmarlo."
+            return
+        }
+
+        _procesandoFirma.value = true
+        viewModelScope.launch {
+            try {
+                val response = backendRepository.crearFirma(
+                    FirmaRequest(tramiteId = tramiteId, firmado = true)
+                )
+
+                if (!response.isSuccessful) {
+                    _errorFirma.value = "No se pudo firmar el trámite. Código: ${response.code()}."
+                    return@launch
+                }
+
+                pendingTramiteStore.clear()
                 _documentoFirmado.value = true
                 sendSuccessNotification()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _errorFirma.value = exception.localizedMessage
+                    ?: "No se pudo conectar con el backend."
+            } finally {
+                _procesandoFirma.value = false
             }
         }
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Notificaciones de Firma"
-            val descriptionText = "Notificaciones al firmar documentos"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(channelId, name, importance).apply {
-                description = descriptionText
+            val channel = NotificationChannel(
+                channelId,
+                "Notificaciones de Firma",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notificaciones al firmar documentos"
             }
-            val notificationManager: NotificationManager =
+            val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
 
     private fun sendSuccessNotification() {
-        val builder = NotificationCompat.Builder(context, channelId)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Documento Firmado")
             .setContentText("Tu declaración jurada se firmó exitosamente.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .build()
 
-        val notificationManager: NotificationManager =
+        val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        // Se envía con un ID fijo (1)
-        notificationManager.notify(1, builder.build())
+        notificationManager.notify(1, notification)
     }
 }
