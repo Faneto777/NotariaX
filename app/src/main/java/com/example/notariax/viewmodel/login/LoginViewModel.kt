@@ -91,7 +91,6 @@ class LoginViewModel(
                 val response = backendRepository.iniciarSesion(
                     LoginRequest(email = currentEmail, password = currentPassword)
                 )
-
                 if (!response.isSuccessful) {
                     _errorMessage.value = when (response.code()) {
                         401 -> "El correo o la contraseña no coinciden."
@@ -101,7 +100,11 @@ class LoginViewModel(
                 }
 
                 val user = response.body()
-                if (user == null) {
+                user?.errorMessage()?.let { message ->
+                    _errorMessage.value = message
+                    return@launch
+                }
+                if (user == null || user.rut.isBlank() || user.nombreCompleto.isBlank()) {
                     _errorMessage.value = "El backend no devolvió los datos del usuario."
                     return@launch
                 }

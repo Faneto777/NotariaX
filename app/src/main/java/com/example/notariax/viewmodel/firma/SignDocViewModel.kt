@@ -71,12 +71,15 @@ class SignDocViewModel(application: Application) : AndroidViewModel(application)
                 val response = backendRepository.crearFirma(
                     FirmaRequest(tramiteId = tramiteId, firmado = true)
                 )
-
                 if (!response.isSuccessful) {
                     _errorFirma.value = "No se pudo firmar el trámite. Código: ${response.code()}."
                     return@launch
                 }
 
+                response.body()?.errorMessage()?.let { message ->
+                    _errorFirma.value = message
+                    return@launch
+                }
                 pendingTramiteStore.clear()
                 _documentoFirmado.value = true
                 sendSuccessNotification()

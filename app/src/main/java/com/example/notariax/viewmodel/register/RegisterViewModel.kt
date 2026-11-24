@@ -132,7 +132,6 @@ class RegisterViewModel(
                         password = currentPassword
                     )
                 )
-
                 if (!response.isSuccessful) {
                     _errorMessage.value = when (response.code()) {
                         409 -> "Ya existe una cuenta registrada con ese RUT."
@@ -142,7 +141,11 @@ class RegisterViewModel(
                 }
 
                 val user = response.body()
-                if (user == null) {
+                user?.errorMessage()?.let { message ->
+                    _errorMessage.value = message
+                    return@launch
+                }
+                if (user == null || user.rut.isBlank() || user.nombreCompleto.isBlank()) {
                     _errorMessage.value = "El backend no devolvió los datos del usuario."
                     return@launch
                 }

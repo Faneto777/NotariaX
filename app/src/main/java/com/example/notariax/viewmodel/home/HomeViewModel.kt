@@ -97,7 +97,11 @@ class HomeViewModel(
                 }
 
                 val user = response.body()
-                _backendUserState.value = if (user == null) {
+                user?.errorMessage()?.let { message ->
+                    _backendUserState.value = BackendUserUiState(errorMessage = message)
+                    return@launch
+                }
+                _backendUserState.value = if (user == null || user.rut.isBlank()) {
                     BackendUserUiState(errorMessage = "El backend no devolvió los datos del usuario.")
                 } else {
                     BackendUserUiState(user = user)

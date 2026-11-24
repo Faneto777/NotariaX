@@ -9,6 +9,7 @@ import com.example.notariax.data.remote.dto.TramiteRequest
 import com.example.notariax.data.remote.dto.TramiteResponse
 import com.example.notariax.data.remote.dto.UsuarioRequest
 import com.example.notariax.data.remote.dto.UsuarioResponse
+import com.example.notariax.data.remote.dto.XanoMessageResponse
 import retrofit2.Response
 
 class BackendRepository(private val service: BackendApiService) {
@@ -18,7 +19,7 @@ class BackendRepository(private val service: BackendApiService) {
     suspend fun iniciarSesion(request: LoginRequest): Response<UsuarioResponse> =
         service.iniciarSesion(request)
 
-    suspend fun recuperarClave(request: RecuperarClaveRequest): Response<Unit> =
+    suspend fun recuperarClave(request: RecuperarClaveRequest): Response<XanoMessageResponse> =
         service.recuperarClave(request)
 
     suspend fun obtenerUsuario(rut: String): Response<UsuarioResponse> =
@@ -27,7 +28,7 @@ class BackendRepository(private val service: BackendApiService) {
     suspend fun actualizarUsuario(rut: String, request: UsuarioRequest): Response<UsuarioResponse> =
         service.actualizarUsuario(rut, request)
 
-    suspend fun eliminarUsuario(rut: String): Response<Unit> =
+    suspend fun eliminarUsuario(rut: String): Response<XanoMessageResponse> =
         service.eliminarUsuario(rut)
 
     suspend fun crearTramite(request: TramiteRequest): Response<TramiteResponse> =
@@ -42,12 +43,12 @@ class BackendRepository(private val service: BackendApiService) {
     suspend fun actualizarTramite(id: Long, request: TramiteRequest): Response<TramiteResponse> =
         service.actualizarTramite(id, request)
 
-    suspend fun eliminarTramite(id: Long): Response<Unit> =
+    suspend fun eliminarTramite(id: Long): Response<XanoMessageResponse> =
         service.eliminarTramite(id)
 
     suspend fun crearFirma(request: FirmaRequest): Response<FirmaResponse> =
         service.crearFirma(request)
 
-    suspend fun obtenerFirmaPorTramite(tramiteId: Long): Response<FirmaResponse> =
+    suspend fun obtenerFirmaPorTramite(tramiteId: Long): Response<List<FirmaResponse>> =
         service.obtenerFirmaPorTramite(tramiteId)
 }

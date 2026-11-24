@@ -109,13 +109,17 @@ class ProcessViewModel(application: Application) : AndroidViewModel(application)
                         estado = "PENDIENTE"
                     )
                 )
-
                 if (!response.isSuccessful) {
                     _errorEnvio.value = "No se pudo crear el trámite. Código: ${response.code()}."
                     return@launch
                 }
 
-                val createdId = response.body()?.id
+                val createdTramite = response.body()
+                createdTramite?.errorMessage()?.let { message ->
+                    _errorEnvio.value = message
+                    return@launch
+                }
+                val createdId = createdTramite?.id
                 if (createdId == null) {
                     _errorEnvio.value = "El backend no devolvió el ID del trámite."
                     return@launch

@@ -81,37 +81,24 @@ Para generar el reporte JaCoCo de esos dos ViewModels y verificar que cada paque
 
 El reporte HTML queda en `app/build/reports/jacoco/jacocoViewModelCoverageReport/html/index.html`. La tarea falla si Login o Registro baja del 80%.
 
-## 🔌 Backend Spring Boot del equipo
+## 🔌 Backend Xano
 
-La aplicación se conecta al backend Spring Boot del equipo con Retrofit y Gson. La URL está configurada en `BackendRetrofitClient` como `http://10.0.2.2:8080/`; las rutas no llevan prefijo `/api`. `10.0.2.2` permite que el emulador Android acceda al PC que lo está ejecutando.
+La aplicación consume Xano con Retrofit y Gson. La URL base está configurada en `BackendRetrofitClient` como `https://x8ki-letl-twmt.n7.xano.io/api:7VNgQ7Kr/`; las rutas del servicio son relativas a esa URL. El manifest conserva el permiso de Internet y no necesita habilitar HTTP sin cifrar.
 
-Para probar la aplicación, abre el proyecto backend en IntelliJ y ejecuta `NotariaxBackendApplication`. Debe permanecer activo en el puerto `8080` mientras se usa la app. En un dispositivo físico, cambia la URL base por la dirección IP del PC accesible desde el teléfono. El manifest permite tráfico HTTP sin cifrar para el entorno local del curso.
+### Rutas confirmadas
 
-### Contrato de endpoints
+Los campos JSON usan camelCase, salvo `created_at`, y se corresponden con los DTOs de `data/remote/dto/BackendDtos.kt`.
 
-Los nombres de los campos JSON son camelCase y coinciden con los DTOs de `data/remote/dto/BackendDtos.kt`.
-
-| Método | Ruta | Body | Respuesta del backend |
+| Método | Ruta | Body o query | Respuesta |
 | --- | --- | --- | --- |
-| POST | `/usuarios/registro` | `rut`, `nombreCompleto`, `email`, `password` | `201` con usuario; `409` si el RUT ya existe |
-| POST | `/usuarios/login` | `email`, `password` | `200` con usuario; `401` si las credenciales no coinciden |
-| POST | `/usuarios/recuperar` | `email` | `200` sin body |
-| GET | `/usuarios/{rut}` | — | `200` con usuario; `404` si no existe |
-| PUT | `/usuarios/{rut}` | `rut`, `nombreCompleto`, `email`, `password` | `200` con usuario; `password: null` conserva la actual |
-| DELETE | `/usuarios/{rut}` | — | `204`; `404` si no existe |
-| POST | `/tramites` | `tipoTramite`, `antecedentes`, `documentoAdjunto`, `estado` | `201` con trámite, `id` y `fechaCreacion` |
-| GET | `/tramites` | — | `200` con la lista de trámites |
-| GET | `/tramites/{id}` | — | `200` con trámite; `404` si no existe |
-| PUT | `/tramites/{id}` | `tipoTramite`, `antecedentes`, `documentoAdjunto`, `estado` | `200` con trámite; `404` si no existe |
-| DELETE | `/tramites/{id}` | — | `204`; `404` si no existe |
-| POST | `/firmas` | `tramiteId`, `firmado` | `201` con firma; `fechaFirma` se asigna al firmar |
-| GET | `/firmas/tramite/{tramiteId}` | — | `200` con firma; `404` si no existe |
+| POST | `/usuarios/registro` | `rut`, `nombreCompleto`, `email`, `password` | Usuario con `id`, `created_at`, `rut`, `nombreCompleto`, `email` y `password` |
+| POST | `/usuarios/login` | `email`, `password` | Datos del usuario |
+| POST | `/usuarios/recuperar` | `email` | La app revisa también el cuerpo de respuesta |
+| GET | `/firmas-por-tramite` | Query `tramiteId` | Lista de firmas del trámite |
 
-El servicio Retrofit declara los 13 endpoints y `BackendRepository` los expone a la app. Las pantallas actuales usan registro, login, perfil, creación de trámite y firma; las rutas de edición, eliminación y listado quedan disponibles en el repositorio para las pantallas CRUD que se agreguen.
+Xano puede responder HTTP `200` incluso cuando una operación falla. En ese caso puede devolver `{"payload":"RUT ya registrado","statement":"Throw Error"}`. La app revisa `statement` y muestra `payload` como error antes de guardar la sesión o indicar éxito.
 
-La recuperación registra la solicitud, pero el backend actual no envía correos. El PIN de firma se valida en la app y no se envía al backend. La firma del backend recibe únicamente `tramiteId` y `firmado`.
-
-En esta versión académica, el backend almacena contraseñas en texto plano.
+El servicio Retrofit también declara las operaciones de perfil, trámites y firmas usadas por la app. La firma envía `tramiteId` y `firmado`; el PIN se valida localmente y no se envía al servicio.
 
 ## 📦 APK de release firmado
 

@@ -128,6 +128,22 @@ class RegisterViewModelTest {
     }
 
     @Test
+    fun xanoDuplicateRutWithHttp200ShowsPayload() = runTest {
+        val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
+        coEvery { backendRepository.registrarUsuario(request) } returns Response.success(
+            UsuarioResponse(payload = "RUT ya registrado", statement = "Throw Error")
+        )
+        enterValidForm()
+
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
+
+        assertEquals("RUT ya registrado", viewModel.errorMessage.value)
+        assertFalse(viewModel.registrationSuccess.value)
+        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+    }
+
+    @Test
     fun serverFailureShowsStatusCode() = runTest {
         val request = UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
         val serverErrorResponse = mockk<Response<UsuarioResponse>>()

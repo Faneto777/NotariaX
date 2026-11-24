@@ -133,6 +133,25 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun xanoLoginErrorWithHttp200ShowsPayload() = runTest {
+        advanceUntilIdle()
+        coEvery {
+            backendRepository.iniciarSesion(LoginRequest("juan@example.com", "incorrecta"))
+        } returns Response.success(
+            UsuarioResponse(payload = "Credenciales inválidas", statement = "Throw Error")
+        )
+        viewModel.onEmailChanged("juan@example.com")
+        viewModel.onPasswordChanged("incorrecta")
+
+        viewModel.onLoginClick()
+        advanceUntilIdle()
+
+        assertEquals("Credenciales inválidas", viewModel.errorMessage.value)
+        assertFalse(viewModel.navigateToHome.value)
+        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+    }
+
+    @Test
     fun serverFailureShowsStatusCode() = runTest {
         advanceUntilIdle()
         val serverErrorResponse = mockk<Response<UsuarioResponse>>()

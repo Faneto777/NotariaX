@@ -6,6 +6,7 @@ import com.example.notariax.data.remote.dto.LoginRequest
 import com.example.notariax.data.remote.dto.RecuperarClaveRequest
 import com.example.notariax.data.remote.dto.TramiteRequest
 import com.example.notariax.data.remote.dto.TramiteResponse
+import com.example.notariax.data.remote.dto.XanoMessageResponse
 import com.example.notariax.data.remote.dto.UsuarioRequest
 import com.example.notariax.data.remote.dto.UsuarioResponse
 import retrofit2.Response
@@ -15,6 +16,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface BackendApiService {
     @POST("usuarios/registro")
@@ -24,7 +26,7 @@ interface BackendApiService {
     suspend fun iniciarSesion(@Body request: LoginRequest): Response<UsuarioResponse>
 
     @POST("usuarios/recuperar")
-    suspend fun recuperarClave(@Body request: RecuperarClaveRequest): Response<Unit>
+    suspend fun recuperarClave(@Body request: RecuperarClaveRequest): Response<XanoMessageResponse>
 
     @GET("usuarios/{rut}")
     suspend fun obtenerUsuario(@Path("rut") rut: String): Response<UsuarioResponse>
@@ -36,7 +38,7 @@ interface BackendApiService {
     ): Response<UsuarioResponse>
 
     @DELETE("usuarios/{rut}")
-    suspend fun eliminarUsuario(@Path("rut") rut: String): Response<Unit>
+    suspend fun eliminarUsuario(@Path("rut") rut: String): Response<XanoMessageResponse>
 
     @POST("tramites")
     suspend fun crearTramite(@Body request: TramiteRequest): Response<TramiteResponse>
@@ -54,13 +56,13 @@ interface BackendApiService {
     ): Response<TramiteResponse>
 
     @DELETE("tramites/{id}")
-    suspend fun eliminarTramite(@Path("id") id: Long): Response<Unit>
+    suspend fun eliminarTramite(@Path("id") id: Long): Response<XanoMessageResponse>
 
     @POST("firmas")
     suspend fun crearFirma(@Body request: FirmaRequest): Response<FirmaResponse>
 
-    @GET("firmas/tramite/{tramiteId}")
+    @GET("firmas-por-tramite")
     suspend fun obtenerFirmaPorTramite(
-        @Path("tramiteId") tramiteId: Long
-    ): Response<FirmaResponse>
+        @Query("tramiteId") tramiteId: Long
+    ): Response<List<FirmaResponse>>
 }

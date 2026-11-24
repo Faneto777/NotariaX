@@ -50,11 +50,15 @@ class ForgotPasswordViewModel(private val backendRepository: BackendRepository) 
                 val response = backendRepository.recuperarClave(
                     RecuperarClaveRequest(email = currentEmail)
                 )
-                if (response.isSuccessful) {
-                    _emailSent.value = true
-                } else {
+                if (!response.isSuccessful) {
                     _errorMessage.value = "No se pudo procesar la solicitud. Código: ${response.code()}."
+                    return@launch
                 }
+                response.body()?.errorMessage()?.let { message ->
+                    _errorMessage.value = message
+                    return@launch
+                }
+                _emailSent.value = true
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
