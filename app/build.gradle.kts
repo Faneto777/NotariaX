@@ -5,7 +5,7 @@ import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import java.util.Properties
 
-val releaseSigningPropertiesFile = rootProject.file("keystore.properties")
+val releaseSigningPropertiesFile = File(System.getProperty("user.home"), "AppData/Local/NotariaX/Signing/keystore.properties")
 val releaseSigningProperties = Properties().apply {
     if (releaseSigningPropertiesFile.exists()) {
         releaseSigningPropertiesFile.inputStream().use(::load)
@@ -41,11 +41,15 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = releaseSigningProperties.getProperty("storeFile")
-                ?.let(rootProject::file)
+            storeFile = releaseSigningProperties.getProperty("storeFile")?.let { path ->
+                val configuredFile = File(path)
+                if (configuredFile.isAbsolute) configuredFile else File(releaseSigningPropertiesFile.parentFile, path)
+            }
             storePassword = releaseSigningProperties.getProperty("storePassword")
             keyAlias = releaseSigningProperties.getProperty("keyAlias")
             keyPassword = releaseSigningProperties.getProperty("keyPassword")
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
