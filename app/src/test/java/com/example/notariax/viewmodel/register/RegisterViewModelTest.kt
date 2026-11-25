@@ -62,7 +62,7 @@ class RegisterViewModelTest {
         assertTrue(viewModel.emailError.value)
         assertTrue(viewModel.passwordError.value)
         assertTrue(viewModel.confirmPasswordError.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
     }
 
     @Test
@@ -103,7 +103,7 @@ class RegisterViewModelTest {
                 UsuarioRequest("12345678K", "Juan Perez", "juan@example.com", "clave123")
             )
         }
-        coVerify(exactly = 1) { repository.saveUser("12345678K", "Juan Perez") }
+        coVerify(exactly = 1) { repository.saveUser("12345678K", "Juan Perez", "juan@example.com") }
         assertTrue(viewModel.registrationSuccess.value)
 
         viewModel.onNavigatedToHome()
@@ -124,7 +124,7 @@ class RegisterViewModelTest {
 
         assertEquals("Ya existe una cuenta registrada con ese RUT.", viewModel.errorMessage.value)
         assertFalse(viewModel.registrationSuccess.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
     }
 
     @Test
@@ -140,7 +140,7 @@ class RegisterViewModelTest {
 
         assertEquals("RUT ya registrado", viewModel.errorMessage.value)
         assertFalse(viewModel.registrationSuccess.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
     }
 
     @Test

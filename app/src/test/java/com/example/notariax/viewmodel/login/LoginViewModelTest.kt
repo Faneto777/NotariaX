@@ -88,7 +88,7 @@ class LoginViewModelTest {
 
         assertTrue(viewModel.emailError.value)
         assertTrue(viewModel.passwordError.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
         coVerify(exactly = 0) { backendRepository.iniciarSesion(any()) }
     }
 
@@ -105,7 +105,7 @@ class LoginViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { backendRepository.iniciarSesion(LoginRequest("juan@example.com", "clave123")) }
-        coVerify(exactly = 1) { repository.saveUser("12345678K", "Juan Perez") }
+        coVerify(exactly = 1) { repository.saveUser("12345678K", "Juan Perez", "juan@example.com") }
         assertTrue(viewModel.navigateToHome.value)
 
         viewModel.onNavigatedToHome()
@@ -129,7 +129,7 @@ class LoginViewModelTest {
 
         assertEquals("El correo o la contraseña no coinciden.", viewModel.errorMessage.value)
         assertFalse(viewModel.navigateToHome.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
     }
 
     @Test
@@ -148,7 +148,7 @@ class LoginViewModelTest {
 
         assertEquals("Credenciales inválidas", viewModel.errorMessage.value)
         assertFalse(viewModel.navigateToHome.value)
-        coVerify(exactly = 0) { repository.saveUser(any(), any()) }
+        coVerify(exactly = 0) { repository.saveUser(any(), any(), any()) }
     }
 
     @Test

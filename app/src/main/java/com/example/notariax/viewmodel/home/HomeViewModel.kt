@@ -4,14 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notariax.data.local.AppDatabase
-import com.example.notariax.data.remote.BackendRetrofitClient
 import com.example.notariax.data.remote.ExternalRetrofitClient
-import com.example.notariax.data.remote.dto.UsuarioResponse
-import com.example.notariax.data.repository.BackendRepository
 import com.example.notariax.data.repository.ExternalApiOverview
 import com.example.notariax.data.repository.ExternalApiRepository
 import com.example.notariax.data.repository.RoomUserRepository
 import com.example.notariax.data.repository.UserRepository
+import com.example.notariax.model.UserEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,23 +22,21 @@ data class ExternalApiUiState(
     val errorMessage: String? = null
 )
 
-data class BackendUserUiState(
+data class UserProfileUiState(
     val isLoading: Boolean = false,
-    val user: UsuarioResponse? = null,
+    val user: UserEntity? = null,
     val errorMessage: String? = null
 )
 
 class HomeViewModel(
     application: Application,
     private val userRepository: UserRepository,
-    private val backendRepository: BackendRepository,
     private val externalApiRepository: ExternalApiRepository
 ) : AndroidViewModel(application) {
 
     constructor(application: Application) : this(
         application,
         RoomUserRepository(AppDatabase.getDatabase(application).userDao()),
-        BackendRepository(BackendRetrofitClient.service),
         ExternalApiRepository(ExternalRetrofitClient.service)
     )
 
@@ -50,12 +46,12 @@ class HomeViewModel(
     private val _externalApiState = MutableStateFlow(ExternalApiUiState())
     val externalApiState: StateFlow<ExternalApiUiState> = _externalApiState.asStateFlow()
 
-    private val _backendUserState = MutableStateFlow(BackendUserUiState(isLoading = true))
-    val backendUserState: StateFlow<BackendUserUiState> = _backendUserState.asStateFlow()
+    private val _userProfileState = MutableStateFlow(UserProfileUiState(isLoading = true))
+    val userProfileState: StateFlow<UserProfileUiState> = _userProfileState.asStateFlow()
 
     init {
         loadExternalApiData()
-        loadBackendUser()
+        loadUserProfile()
     }
 
     fun onLogoutClick() {
@@ -69,48 +65,31 @@ class HomeViewModel(
         loadExternalApiData()
     }
 
-    fun onRefreshBackendUserClick() {
-        loadBackendUser()
+    fun onRefreshProfileClick() {
+        loadUserProfile()
     }
 
-    private fun loadBackendUser() {
+    private fun loadUserProfile() {
         viewModelScope.launch {
-            _backendUserState.value = _backendUserState.value.copy(
+            _userProfileState.value = _userProfileState.value.copy(
                 isLoading = true,
                 errorMessage = null
             )
             try {
                 val sessionUser = userRepository.getLoggedUser()
-                if (sessionUser == null) {
-                    _backendUserState.value = BackendUserUiState(
-                        errorMessage = "No hay una sesión local para consultar el perfil."
+                if (sessionUser == null || !sessionUser.isLoggedIn) {
+                    _userProfileState.value = UserProfileUiState(
+                        errorMessage = "No hay una sesión local para mostrar el perfil."
                     )
                     return@launch
                 }
 
-                val response = backendRepository.obtenerUsuario(sessionUser.username)
-                if (!response.isSuccessful) {
-                    _backendUserState.value = BackendUserUiState(
-                        errorMessage = "No se pudo cargar el perfil. Código: ${response.code()}."
-                    )
-                    return@launch
-                }
-
-                val user = response.body()
-                user?.errorMessage()?.let { message ->
-                    _backendUserState.value = BackendUserUiState(errorMessage = message)
-                    return@launch
-                }
-                _backendUserState.value = if (user == null || user.rut.isBlank()) {
-                    BackendUserUiState(errorMessage = "El backend no devolvió los datos del usuario.")
-                } else {
-                    BackendUserUiState(user = user)
-                }
+                _userProfileState.value = UserProfileUiState(user = sessionUser)
             } catch (exception: kotlinx.coroutines.CancellationException) {
                 throw exception
             } catch (_: Exception) {
-                _backendUserState.value = BackendUserUiState(
-                    errorMessage = "No se pudo cargar el perfil. Comprueba que el servicio esté disponible."
+                _userProfileState.value = UserProfileUiState(
+                    errorMessage = "No se pudo cargar el perfil guardado en el dispositivo."
                 )
             }
         }

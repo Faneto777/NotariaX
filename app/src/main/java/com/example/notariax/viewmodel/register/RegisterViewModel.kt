@@ -150,7 +150,11 @@ class RegisterViewModel(
                     return@launch
                 }
 
-                sessionRepository.saveUser(username = user.rut, fullName = user.nombreCompleto)
+                sessionRepository.saveUser(
+                    username = user.rut,
+                    fullName = user.nombreCompleto,
+                    email = user.email
+                )
                 _registrationSuccess.value = true
             } catch (exception: CancellationException) {
                 throw exception
